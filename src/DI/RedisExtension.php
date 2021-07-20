@@ -8,8 +8,6 @@ use Contributte\Redis\Tracy\RedisPanel;
 use Nette\Caching\IStorage;
 use Nette\DI\CompilerExtension;
 use Nette\DI\Definitions\ServiceDefinition;
-use Nette\DI\Definitions\Statement;
-use Nette\DI\PhpGenerator;
 use Nette\Http\Session;
 use Nette\PhpGenerator\ClassType;
 use Nette\Schema\Expect;
@@ -154,17 +152,10 @@ final class RedisExtension extends CompilerExtension
 
 		// Add panel to tracy bar only if debug is allowed
 		if ($config->debug && $config->connection !== []) {
-			$generator = new PhpGenerator($this->getContainerBuilder());
-			$this->initialization->addBody($generator->formatPhp('?;', [
-				new Statement(
-					'if (strtolower(?) === "true" || ? === "0") { $this->getService(?)->addPanel($this->getService(?)); }',
-					[
-						$config->debug,
-						$config->debug,
-						'tracy.bar',
-						$this->prefix('panel'),
-					]
-				),
+			$this->initialization->addBody($this->getContainerBuilder()->formatPhp('boolval(?) && $this->getService(?)->addPanel($this->getService(?));', [
+				$config->debug,
+				'tracy.bar',
+				$this->prefix('panel'),
 			]));
 		}
 	}

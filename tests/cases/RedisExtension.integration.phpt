@@ -6,9 +6,7 @@ use Contributte\Redis\Tracy\RedisPanel;
 use Nette\DI\Compiler;
 use Nette\DI\Config\Loader;
 use Nette\DI\Container;
-use Nette\DI\ContainerBuilder;
 use Nette\DI\Extensions\ExtensionsExtension;
-use Nette\DI\PhpGenerator;
 use Predis\Client;
 use Predis\Connection\ConnectionException;
 use Tester\Assert;
@@ -21,26 +19,19 @@ require_once __DIR__ . '/../bootstrap.php';
 function createContainer($source, $config = null, array $params = []): ?Container
 {
 	$class = 'Container' . md5((string) lcg_value());
-	if ($source instanceof ContainerBuilder) {
-		$source->complete();
-		$code = (new PhpGenerator($source))->generate($class);
-
-	} elseif ($source instanceof Compiler) {
-		if (is_string($config)) {
-			$loader = new Loader();
-			$config = $loader->load(is_file($config) ? $config : FileMock::create($config, 'neon'));
-		}
-
-		$code = $source->addConfig((array) $config)
-			->setClassName($class)
-			->compile();
-	} else {
-		return null;
+	if (is_string($config)) {
+		$loader = new Loader();
+		$config = $loader->load(is_file($config) ? $config : FileMock::create($config, 'neon'));
 	}
+
+	$code = $source->addConfig((array) $config)
+		->setDynamicParameterNames(['remoteIp'])
+		->setClassName($class)
+		->compile();
 
 	file_put_contents(__DIR__ . '/../tmp/code.php', "<?php\n\n" . $code);
 	require __DIR__ . '/../tmp/code.php';
-	return new $class($params);
+	return new $class(['remoteIp' => false]);
 }
 
 
@@ -66,7 +57,7 @@ tracy:
 	showBar: true
 
 redis:
-	debug: ::getenv("RD_DEBUG")
+	debug: true
 	connection:
 		default:
 			uri: ::getenv("RD_URI")
