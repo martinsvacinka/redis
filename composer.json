@@ -1,5 +1,5 @@
 {
-  "name": "contributte/redis",
+  "name": "martinsvacinka/redis",
   "description": "Redis client integration into Nette framework",
   "keywords": [
     "nette",
